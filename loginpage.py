@@ -20,11 +20,11 @@ app.secret_key = "ayush"
 # Arrancamos la base de datos en el puerto 9200
 es = Elasticsearch("http://localhost:9200")
 
-'''
+"""
 Esta funcion genera cookies para comprobar si un usuario accede por primera vez o no. En caso afirmativo devuelve una web
 u otra.
 La funcion se activa al acceder al recurso ubicado en /.
-'''
+"""
 @app.route('/')  
 def home():    
   if 'first_time' in request.cookies:
@@ -37,15 +37,19 @@ def home():
     resp = make_response(render_template("homepage_firstTime.html"))
     resp.set_cookie('first_time', 'false', max_age=60*60*24*365)
     return resp
-'''
-La funcion logged 
-'''
+"""
+La funcion logged comprueba si el usuario esta registrado, en caso afirmativo, reenvia al usuario a la web
+con privilegios para usuarios registrados
+"""
 @app.route('/registered')
 def logged():
   if 'email' in session:   
     username = session['username']
     return make_response(render_template('homepageRegistered.html',username=username))
-
+"""
+La funcion gold_inst, proporciona el valor instantaneo del oro. Para ello, utiliza un webdriver mediante selenium
+que apunta a la URL deseada.
+"""
 @app.route('/gold',methods=['GET'])
 def gold_inst():
   op = webdriver.ChromeOptions()
@@ -58,7 +62,10 @@ def gold_inst():
   gold = val[:9]
   username = session['username']
   return render_template("homepageRegistered.html",gold_val=gold,username=username)
-
+"""
+Esta funcion permite al usuario que acceda por primera vez a la web el poder ver el valor actual del oro, pero
+esta opcion solo esta permitida la primera vez que accede el usuario a la web.
+"""
 @app.route('/goldFirst',methods=['GET'])
 def gold_inst_first():
   op = webdriver.ChromeOptions()
@@ -70,38 +77,37 @@ def gold_inst_first():
   val = valores[13].text
   gold = val[:9]
   return render_template("homepage_firstTime.html",gold_val=gold)
-  
+"""
+Esta funcion devuelve una vista tras el registro de un nuevo usuario
+"""
 @app.route('/register')  
 def register():  
 	return render_template("registerpage3.html")  
-
+"""
+Esta funcion devuelve una vista tras el inicio de sesion de un usuario
+"""
 @app.route('/login')
 def login():
    return render_template("loginpage.html")
-
+"""
+Esta funcion redirige a un usuario a la vista donde se encuentra la grafica de la BBDD externa
+"""
 @app.route('/graph',methods=['GET'])
 def show_graph():
   return render_template('graph.html')
-
+"""
+Esta funcion muestra el valor actual del oro. Se suscribe a un feed en una URL y lo muestra en una vista.
+"""
 @app.route('/feed',methods=['GET'])
 def show_feed():
    feed_url = 'https://grovestreams.com/api/component/114b6faa-03b2-39d7-8308-4ab2a358782d/stream/5bb43b08-138a-3643-9f5d-5dd1c95e6afe/feed/rss.xml?org=228f917a-23b6-3211-a99e-cef65d08d9ca&api_key=4b93d65d-6597-3b18-8c64-004b39c0e5b9'
    feed = feedparser.parse(feed_url)
-   print("------------",feed.entries[0].description)
    return render_template('feed.html',entries=feed.entries)
 
-@app.route('/time', methods=['GET', 'POST'])
-def get_Time():
-    print("------Estas en la funcion de la hora---------")
-    hora = None
-    if 'username' in session:
-      print("-------La sesion es: ",session)
-      if request.method == 'GET':
-        username = session['username']
-        hora = datetime.now().strftime('%H:%M:%S')
-      return render_template('homepageRegistered.html', hora=hora,username=username)
-    return render_template('homepage2.html', hora=hora)
-
+"""
+Esta funcion obtiene la media de la BBDD externa. Se requiere una api_key. Mediante una query puede obtener el
+valor de la media. Finalmente formatea los datos a un float con dos decimales.
+"""
 @app.route('/externMean', methods=['GET'])
 def extern_mean():
   api_key = '7fc35707-ca78-34f7-9882-9673c9e4357e'
@@ -114,6 +120,10 @@ def extern_mean():
   username = session['username']
   return render_template('homepageRegistered.html',ext_media=media,username=username)
 
+"""
+Esta funcion obtiene la media de los valores del oro de la BBDD local. Usa una query para obtener los valores del oro
+y mediante dos variables, suma y total obtiene la media.
+"""
 @app.route('/mean', methods=['GET'])
 def get_Average():
   if request.method == 'GET':
@@ -129,7 +139,11 @@ def get_Average():
     media = "{:.2f}".format(sum/total)
     username = session['username']
     return render_template('homepageRegistered.html', media=media, username=username)
-  
+
+"""
+Esta funcion comprueba que el email y la contraseña pertenecen a un usuario ya registrado, de esa manera le permite
+los privilegios de usuario registrado ya que le muestra la vista web para usuarios registrados.
+"""
 @app.route('/access',methods=["POST"])
 def access():
   email = request.form['email']
@@ -148,7 +162,10 @@ def access():
     return render_template('success3.html')
   else:
     return render_template('unsuccess.html')
-
+"""
+Esta funcion almacena en la sesion actual los valores obtenidos por el formulario. Finalmente, guarda dichos valores
+en la BBDD local, pero hasheando la password.
+"""
 @app.route('/success',methods = ["POST"])   
 def success(): 
   email = request.form['email']
@@ -167,6 +184,9 @@ def success():
     es.index(index='users',document=doc)
     return render_template('success3.html')
 
+"""
+Esta funcion cierra la sesion de un usuario. Borra sus valores de la sesion.
+"""
 @app.route('/logout')  
 def logout(): 
   if 'email' or 'username' in session:  
@@ -175,12 +195,15 @@ def logout():
     return render_template('logoutpage2.html');  
   else:  
     return '<p>user already logged out</p>'   
-  
+
+"""
+Esta funcion muestra informacion acerca del usuario ya registrado. Usa una query para buscar la informacion del usuario
+en la BBDD local.
+"""
 @app.route('/profile')  
 def profile():  
 		if 'email' in session:  
 			email = session['email']  
-			print("--------El email es: ",email)
 			user_name = es.search(index='users',body={"query":{"match":{"email":str(email)}}})
 			if user_name['hits']['total']['value'] > 0:
 				documento=user_name['hits']['hits'][0]['_source']
@@ -190,22 +213,10 @@ def profile():
 				return render_template('profile.html',name=email,usuario=user_name)
 		else:  
 			return '<p>Please login first</p><br><a href = "/">Volver a la pantalla principal</a><br>'  
-
-def show_gold():
-  while True:
-    media = 0
-    sum = 0
-    total = 0
-    body = {"query": {"match_all": {}},"size": 1000}
-    response = es.search(index='oro',body=body)
-    for hit in response['hits']['hits']:
-      gold = hit['_source']['gold_val']
-      sum += float(gold)
-      total += 1
-    media = "{:.2f}".format(sum/total)
-    print("La media es: ",media)
-    time.sleep(120)
-
+"""
+Esta funcion obtiene el valor del oro cada dos minutos y guarda en la BBDD local dicho valor junto con la hora y 
+minutos en los que lo obtuvo. 
+"""
 def save_gold_local():
   op = webdriver.ChromeOptions()
   op.add_argument('headless')
@@ -223,7 +234,7 @@ def save_gold_local():
     es.index(index='gold_values',document=doc)
     time.sleep(120)
 
-
+# Arranque del servidor web
 if __name__ == "__main__":
   t1 = threading.Thread(target=save_gold_local)
   t1.start()
