@@ -1,0 +1,32 @@
+
+<html>  
+ <head>  
+ <title>home</title>  
+ </head>  
+ <body>   
+ <h3>Sesión con el usuario: {{username}}</h3>  
+
+ <form action="/gold" method="get">
+    <button type="submit">Valor actual del oro</button>
+</form>
+<p>El valor actual del oro es: {{gold_val}}</p>
+<br>
+<form action="/externMean" method="get">
+    <button type="submit">Mostrar media BBDD exterior</button>
+</form>
+<p>La media del oro (External DB): {{ext_media}}</p>
+<form action="/mean" method="get">
+    <button type="submit">Mostrar media BBDD local</button>
+</form>
+<p>La media del oro (Local DB): {{media}}</p>
+<br>
+<form action="/graph" method="get">
+    <button type="submit">Mostrar Grafico</button>
+</form>
+<form action="/feed" method="get">
+    <button type="submit">Mostrar RSS</button>
+</form>
+ <a href = "/profile">Ver perfil</a><br>
+ <a href = "/logout">Cerrar sesión</a><br>
+ </body>
+ </html>
