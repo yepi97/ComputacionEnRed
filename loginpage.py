@@ -10,13 +10,21 @@ from selenium.webdriver.remote.remote_connection import LOGGER, logging
 import feedparser
 import requests
 
+# Disminuye la cantidad de logs 
 LOGGER.setLevel(logging.WARNING)
 
+# Crea la aplicacion con Flask
 app = Flask(__name__)  
 app.secret_key = "ayush"  
 
+# Arrancamos la base de datos en el puerto 9200
 es = Elasticsearch("http://localhost:9200")
 
+'''
+Esta funcion genera cookies para comprobar si un usuario accede por primera vez o no. En caso afirmativo devuelve una web
+u otra.
+La funcion se activa al acceder al recurso ubicado en /.
+'''
 @app.route('/')  
 def home():    
   if 'first_time' in request.cookies:
@@ -29,11 +37,12 @@ def home():
     resp = make_response(render_template("homepage_firstTime.html"))
     resp.set_cookie('first_time', 'false', max_age=60*60*24*365)
     return resp
-  
+'''
+La funcion logged 
+'''
 @app.route('/registered')
 def logged():
-  if 'email' in session:  
-    email = session['email']
+  if 'email' in session:   
     username = session['username']
     return make_response(render_template('homepageRegistered.html',username=username))
 
